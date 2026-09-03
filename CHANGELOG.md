@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.2.0] - 2026-09-03
+
+### Added — `content_delete`: generated content can finally be removed
+
+`DELETE_STUDIO` had sat in the RPC id table since v3, declared and called by
+nothing. Content could be generated and listed but never deleted, so a notebook
+accumulated every draft anyone ever asked for and the only way out was the web
+UI. This is the second piece of dead configuration this area has turned up, and
+the second one found by needing it rather than by reading.
+
+`content_delete` (`DELETE /content/:contentId`) removes an audio overview,
+video, report, infographic, presentation, data table, flashcard set or quiz.
+RPC-backed, no browser, single id per call — batch shapes were probed against
+the live server and refused. Verified by deleting nine real artifacts and
+confirming the notebook came back empty with its source untouched.
+
+Note-backed mind maps are deliberately out of scope: they live in the notes
+system rather than the Studio library, and deleting one only clears it. Payload
+and that carve-out from teng-lin/notebooklm-py (MIT).
+
+### Closed — both open issues, settled by measurement rather than by waiting
+
+**#34** (generated content in the wrong language) is verified end to end on the
+path the reporter was actually running: an audio overview requested in Spanish,
+on the browser transport, from a notebook with no Spanish sources, came back as
+_"Física del magma y formas volcánicas"_. That was the last unproven case, and
+it needed 3.1.2 — 3.1.1's fix handled the report-shaped dialog and missed the
+audio one, which was the filed case.
+
+**#30** (idle server accumulating CPU) is closed on a measurement instead of an
+unfalsifiable hypothesis. A bare launch with stdin held open and silent, on
+3.1.2:
+
+| elapsed | cumulative CPU |
+| ------: | -------------: |
+|   130 s |            1 s |
+|   592 s |            1 s |
+|   671 s |            1 s |
+
+That one second is startup and it does not grow — against the 360 minutes over
+six hours in the report. Every libuv worker idle, no browser spawned alongside,
+clean shutdown on SIGTERM.
+
+---
+
 ## [3.1.2] - 2026-08-21
 
 ### Fixed — 3.1.1's browser-path language fix covered one dialog shape out of two
