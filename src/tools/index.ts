@@ -335,6 +335,13 @@ const TOOL_ANNOTATIONS: Record<string, NonNullable<Tool['annotations']>> = {
     idempotentHint: false,
     openWorldHint: true,
   },
+  delete_content: {
+    title: 'Delete generated content',
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   list_sources: {
     title: 'List notebook sources',
     readOnlyHint: true,
@@ -1245,6 +1252,33 @@ User: "Yes" → call remove_notebook`,
               'Where to resume: pass the nextCursor from the previous page. Omit for the first page.',
           },
         },
+      },
+    },
+    {
+      name: 'delete_content',
+      description:
+        'Delete a generated Studio artifact (audio overview, video, report, infographic, ' +
+        'presentation, data table, flashcards, quiz) from a notebook.\n\n' +
+        'Use list_content first to get the artifact id. RPC-backed (no browser).\n\n' +
+        'WARNING: irreversible. Note-backed mind maps are not covered — they live in the ' +
+        'notes system, not the Studio library.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          content_id: {
+            type: 'string',
+            description: 'The id of the artifact to delete (see list_content).',
+          },
+          notebook_url: {
+            type: 'string',
+            description: 'Notebook URL. If not provided, uses the active notebook.',
+          },
+          notebook_id: {
+            type: 'string',
+            description: 'Notebook UUID (alternative to notebook_url).',
+          },
+        },
+        required: ['content_id'],
       },
     },
     {
@@ -3494,6 +3528,36 @@ export class ToolHandlers {
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       log.error(`❌ [TOOL] read_source failed: ${msg}`);
+      return { success: false, error: msg };
+    }
+  }
+
+  /**
+   * Delete a generated Studio artifact — RPC-only.
+   *
+   * There is no browser fallback: the Studio library's delete control is a
+   * per-card menu the DOM code never modelled, and a half-working destructive
+   * path is worse than none.
+   */
+  async handleDeleteContent(args: {
+    content_id: string;
+    notebook_url?: string;
+    notebook_id?: string;
+  }): Promise<ToolResult<{ notebookId: string; contentId: string; deleted: boolean }>> {
+    log.info(`🔧 [TOOL] delete_content called`);
+    try {
+      if (!args.content_id) return { success: false, error: 'content_id is required' };
+      const notebookId = this.resolveNotebookId(args.notebook_url, args.notebook_id);
+      if (!notebookId) {
+        return { success: false, error: 'No notebook specified (notebook_url or notebook_id)' };
+      }
+      const client = await this.getRpcClient();
+      await new StudioRpc(client).deleteArtifact(notebookId, args.content_id);
+      log.success(`  ✅ (RPC) deleted artifact ${args.content_id}`);
+      return { success: true, data: { notebookId, contentId: args.content_id, deleted: true } };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      log.error(`❌ [TOOL] delete_content failed: ${msg}`);
       return { success: false, error: msg };
     }
   }

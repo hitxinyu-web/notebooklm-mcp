@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: NotebookLM REST API
-  version: 3.1.2
+  version: 3.2.0
   description: |
     Local HTTP REST API for Google NotebookLM. Citation-backed Q&A, Studio
     content generation (audio, video, infographic, report, presentation,
@@ -322,6 +322,29 @@ paths:
         - in: path
           name: id
           required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Deleted }
+
+  /content/{contentId}:
+    delete:
+      tags: [Content]
+      summary: Delete a generated Studio artifact
+      description: |
+        RPC-backed (no browser). Irreversible. Note-backed mind maps are not
+        covered — they live in the notes system, not the Studio library.
+      parameters:
+        - in: path
+          name: contentId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: notebook_url
+          required: false
+          schema: { type: string }
+        - in: query
+          name: notebook_id
+          required: false
           schema: { type: string }
       responses:
         '200': { description: Deleted }

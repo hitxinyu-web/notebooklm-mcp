@@ -135,6 +135,26 @@ export class StudioRpc {
     return { artifactId, status: normalizeStatus(artifact) };
   }
 
+  /**
+   * Delete a Studio artifact.
+   *
+   * `DELETE_STUDIO` sat in the id table unused since v3: content could be
+   * generated and listed but never removed, so a notebook accumulated every
+   * draft anyone ever asked for.
+   *
+   * Single id only — batch shapes were probed and rejected by the server,
+   * per teng-lin/notebooklm-py (MIT), which is also where the `[[2], id]`
+   * payload comes from. A null result means success, so it is not treated as
+   * an error.
+   *
+   * Does **not** cover note-backed mind maps: those live in the notes system
+   * and need `DELETE_NOTE`, and deleting one only clears it rather than
+   * removing the row.
+   */
+  async deleteArtifact(notebookId: string, artifactId: string): Promise<void> {
+    await this.client.call('DELETE_STUDIO', [[2], artifactId], `/notebook/${notebookId}`);
+  }
+
   /** Poll all Studio artifacts (id, type, status, title, media/text when ready). */
   async poll(notebookId: string): Promise<StudioArtifact[]> {
     const params = [[2], notebookId, 'NOT artifact.status = "ARTIFACT_STATUS_SUGGESTED"'];

@@ -42,6 +42,7 @@ export const LEGACY_TO_CANONICAL: Record<string, string> = {
   generate_content: 'content_generate',
   list_content: 'content_list',
   download_content: 'content_download',
+  delete_content: 'content_delete',
   // note_* — Studio notes
   create_note: 'note_create',
   save_chat_to_note: 'note_save_chat',

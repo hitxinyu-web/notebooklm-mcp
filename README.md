@@ -4,7 +4,7 @@
 
 **Automate Google NotebookLM at scale. 33-endpoint HTTP REST API for n8n / Zapier / Make / curl, plus an MCP server for Claude Code / Cursor / Codex. Citation-backed Q&A, full Studio generation (audio · video · infographic · report · presentation · data table), multi-account rotation with auto-reauth across personal and Google Workspace accounts.**
 
-> v3.1.2 — **generated content now comes back in the language you asked for.** The interface locale was deciding the language of every audio overview, report and mind map, overriding the `language` argument — which was itself documented in a form NotebookLM never accepts. Both transports fixed and verified live. Also: reading a source's full indexed text (`source_read`, paginated), `manage_labels` working for the first time, and RPC refusals reported as refusals instead of as a rotated endpoint id. Built on a **dual transport** — the internal `batchexecute` RPC API (10-100× faster than scraping, immune to UI rebrands) with the Playwright browser as an automatic fallback, both shipped permanently. Batch-tested on overnight runs of 1 000+ questions. See the [changelog](./CHANGELOG.md). [Compare with `PleasePrompto/notebooklm-mcp`](https://roomi-fields.github.io/notebooklm-mcp/compare) for when this project is the right pick (REST API, full Studio, auto-reauth).
+> v3.2.0 — **generated content can finally be deleted** (`content_delete`): the endpoint had been declared and called by nothing since v3, so notebooks accumulated every draft ever asked for. Builds on 3.1.x, where **generated content stopped coming back in the wrong language** — the interface locale was overriding the `language` argument on both transports, silently, while reporting success. Also: reading a source's full indexed text (`source_read`, paginated), working source labels, and RPC refusals reported as refusals instead of as a rotated endpoint id. Built on a **dual transport** — the internal `batchexecute` RPC API (10-100× faster than scraping, immune to UI rebrands) with the Playwright browser as an automatic fallback, both shipped permanently. Batch-tested on overnight runs of 1 000+ questions. See the [changelog](./CHANGELOG.md). [Compare with `PleasePrompto/notebooklm-mcp`](https://roomi-fields.github.io/notebooklm-mcp/compare) for when this project is the right pick (REST API, full Studio, auto-reauth).
 
 > **Note (July 2026):** Google rebranded **NotebookLM** to **Gemini Notebook**. It is the same product, existing links redirect, and this project drives the same underlying service — the browser path was updated for the new DOM in v2.3.0 and the RPC path in v3.0.0. Package and repository keep the `notebooklm` name.
 
@@ -123,6 +123,7 @@ Flashcards and quizzes are generated via `generate_study_aid`; mind maps via `ge
 - **Download Video** — MP4 video files
 - **Download Infographic** — PNG image files
 - Text-based content (report, presentation, data_table) is returned in the API response
+- **Delete generated content** (`content_delete`) — until now a notebook accumulated every draft anyone ever asked for, with no way to remove one short of the web UI
 
 ### Source Management
 

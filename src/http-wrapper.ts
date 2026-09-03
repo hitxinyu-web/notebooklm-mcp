@@ -764,6 +764,24 @@ app.post('/notebooks/:id/labels', async (req: Request, res: Response) => {
   }
 });
 
+// Delete a generated Studio artifact — RPC extension.
+app.delete('/content/:contentId', async (req: Request, res: Response) => {
+  try {
+    const { notebook_url, notebook_id } = req.query as Record<string, string | undefined>;
+    res.json(
+      await toolHandlers.handleDeleteContent({
+        content_id: req.params.contentId,
+        notebook_url,
+        notebook_id,
+      })
+    );
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
 // List a notebook's sources with their IDs — RPC extension.
 app.get('/notebooks/:id/sources', async (req: Request, res: Response) => {
   try {

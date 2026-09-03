@@ -1,4 +1,4 @@
-# NotebookLM REST API reference — 44 HTTP endpoints
+# NotebookLM REST API reference — 45 HTTP endpoints
 
 > Complete reference for the NotebookLM HTTP REST API. Citation-backed Q&A,
 > Studio content generation, notebook library, multi-account, sessions.
@@ -23,7 +23,7 @@ Or for network access: `http://<SERVER-IP>:3000`
 
 ---
 
-## Available Endpoints (44 total)
+## Available Endpoints (45 total)
 
 ### Authentication
 
@@ -85,6 +85,7 @@ Or for network access: `http://<SERVER-IP>:3000`
 | `POST`   | `/content/chat-to-note`           | Save chat discussion to a note                |
 | `POST`   | `/content/notes/:title/to-source` | Convert note to source                        |
 | `GET`    | `/content`                        | List sources and generated content            |
+| `DELETE` | `/content/:contentId`             | Delete a generated Studio artifact            |
 | `GET`    | `/notebooks/:id/sources`          | List a notebook's sources with their IDs      |
 | `GET`    | `/notebooks/:id/sources/:sid`     | Read a source's full indexed text             |
 | `POST`   | `/content/notes/list`             | List the notebook's notes                     |

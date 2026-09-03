@@ -557,6 +557,12 @@ class NotebookLMMCPServer {
             );
             break;
 
+          case 'delete_content':
+            result = await this.toolHandlers.handleDeleteContent(
+              args as { content_id: string; notebook_url?: string; notebook_id?: string }
+            );
+            break;
+
           case 'generate_content':
             result = await this.toolHandlers.handleGenerateContent(
               args as {

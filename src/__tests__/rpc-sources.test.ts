@@ -87,3 +87,12 @@ describe('SourcesRpc.getSourceFulltext', () => {
     expect(await sources.getSourceFulltext(NB, 'src-1')).toBeNull();
   });
 });
+
+describe('SourcesRpc.deleteSource', () => {
+  it('sends the documented single-id payload, scoped to the notebook', async () => {
+    const { sources, calls } = rpcReturning(null);
+    await sources.deleteSource(NB, 'src-1');
+    expect(calls[0].method).toBe('DELETE_SOURCE');
+    expect(calls[0].path).toBe(`/notebook/${NB}`);
+  });
+});
