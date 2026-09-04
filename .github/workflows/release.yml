@@ -16,10 +16,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Node 24 for npm >= 11.5.1, which is what speaks OIDC to the registry.
+      # Node 20 ships npm 10 and would silently fall back to looking for a
+      # token that no longer exists.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
@@ -31,10 +34,14 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Publish to npm
+      # Trusted publishing: the runner proves its identity to npm with a
+      # short-lived OIDC token (id-token: write, granted above), so there is no
+      # NPM_TOKEN to store, leak or rotate. The stored Automation token this
+      # replaces expired twice — silently, and each time the failure surfaced as
+      # a misleading `404 Not Found` on PUT, which is what npm returns for an
+      # unauthenticated write so as not to reveal whether the package exists.
+      - name: Publish to npm (OIDC trusted publishing, no token)
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Extract changelog section for this release
         id: changelog
