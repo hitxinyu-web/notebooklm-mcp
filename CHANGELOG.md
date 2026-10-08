@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Fixed — `note_get` reads note text over RPC
+
+`note_get` clicked the note in the Studio panel and scraped the editor. When
+that item was present but not visible the click timed out after 30 s and the
+tool only ever reported "Could not extract content from note editor." It now
+reads the note from `GET_NOTES` (the notes-list RPC, already in the id table),
+which returns every note's full text in one call: matched by `note_id`, then
+exact title, then title substring; mind maps are skipped. A freshly launched
+context's first RPC can be refused as UNAUTHENTICATED until a page has loaded
+NotebookLM, so on failure the notebook is opened and the RPC retried once
+before falling back to the old DOM path. `NOTEBOOKLM_TRANSPORT=dom` still
+forces the DOM path.
+
 ## [3.2.0] - 2026-09-03
 
 ### Added — `content_delete`: generated content can finally be removed

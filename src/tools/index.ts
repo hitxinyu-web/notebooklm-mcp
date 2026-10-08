@@ -63,6 +63,7 @@ import { SourcesRpc, type RpcSource } from '../rpc/sources-rpc.js';
 import { QueryRpc } from '../rpc/query-rpc.js';
 import { StudioRpc, type StudioType } from '../rpc/studio-rpc.js';
 import { SharingRpc, type ShareStatus } from '../rpc/sharing-rpc.js';
+import { NotesRpc, findNote } from '../rpc/notes-rpc.js';
 import {
   MindMapRpc,
   LabelsRpc,
@@ -4081,7 +4082,35 @@ export class ToolHandlers {
       if (!resolvedNotebookUrl) {
         return { success: false, error: 'No notebook URL provided and no active notebook set' };
       }
+      // RPC first: GET_NOTES returns every note's full text in one call. The DOM
+      // path clicks the note in the Studio panel, which times out whenever that
+      // item is not visible and surfaces only as "Could not extract content".
+      const notebookId = this.notebookIdFromUrl(resolvedNotebookUrl);
+      let rpcFailed = false;
+      if (this.useRpcTransport() && notebookId) {
+        try {
+          const rpcResult = await this.getNoteViaRpc(notebookId, note_title, note_id);
+          if (rpcResult) return rpcResult;
+          log.warning('  ⚠️ get_note: note not found via RPC, falling back to DOM');
+        } catch (error) {
+          rpcFailed = true;
+          const msg = error instanceof Error ? error.message : String(error);
+          log.warning(`  ⚠️ get_note RPC failed (${msg}); opening the notebook and retrying`);
+        }
+      }
       const session = await this.sessionManager.getOrCreateSession(session_id, resolvedNotebookUrl);
+      if (rpcFailed && notebookId) {
+        // A freshly launched context carries stale auth cookies until a page has
+        // loaded NotebookLM (Google rotates them on navigation): the first RPC is
+        // refused as UNAUTHENTICATED. The session just navigated, so retry once.
+        try {
+          const rpcResult = await this.getNoteViaRpc(notebookId, note_title, note_id);
+          if (rpcResult) return rpcResult;
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error);
+          log.warning(`  ⚠️ get_note RPC retry failed (${msg}); falling back to DOM`);
+        }
+      }
       const page = session.getPage();
       if (!page) {
         return { success: false, error: 'Could not access browser page' };
@@ -4102,6 +4131,34 @@ export class ToolHandlers {
       log.error(`❌ [TOOL] get_note failed: ${errorMessage}`);
       return { success: false, error: errorMessage };
     }
+  }
+
+  /**
+   * Read a note's full text over the `GET_NOTES` RPC (read-only, no browser
+   * clicks). Resolves to null when no note matches; throws on RPC failure so
+   * the caller can retry or fall back to the DOM path.
+   */
+  private async getNoteViaRpc(
+    notebookId: string,
+    noteTitle?: string,
+    noteId?: string
+  ): Promise<ToolResult<NoteGetResult> | null> {
+    const notes = await new NotesRpc(await this.getRpcClient()).list(notebookId);
+    const note = findNote(notes, noteTitle, noteId);
+    if (!note) return null;
+    log.success(
+      `✅ [TOOL] get_note completed (RPC): "${note.title}" (${note.content.length} chars)`
+    );
+    return {
+      success: true,
+      data: {
+        success: true,
+        title: note.title,
+        content: note.content,
+        noteId: note.id,
+        transport: 'rpc',
+      },
+    };
   }
 
   /**

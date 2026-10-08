@@ -202,4 +202,8 @@ export interface NoteGetResult {
   title: string;
   content: string;
   error?: string;
+  /** Note id (set when read over RPC). */
+  noteId?: string;
+  /** Which path produced the content. */
+  transport?: 'rpc' | 'dom';
 }
